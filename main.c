@@ -84,8 +84,9 @@ u32 half_default_button_height = 0;
 
 SDL_Texture* button_texture;
 SDL_Texture* button_pressed;
-SDL_Texture* background_texture;
-SDL_Texture* cross_texture;
+
+SDL_Texture* slider_texture;
+SDL_Texture* arrow_texture;
 
 u8 scale = 4;
 
@@ -99,10 +100,8 @@ typedef struct {
 
 UIState ui_state = {0};
 SDL_FRect button_rect = {0};
-SDL_FRect button_rect2 = {0};
-SDL_FRect window_rect = {0};
-SDL_FRect window_handle_rect = {0};
-SDL_FRect cross_rect = {0};
+SDL_FRect slider_rect = {0};
+SDL_FRect arrow_rect = {0};
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
   SDL_SetHint(SDL_HINT_MAIN_CALLBACK_RATE, "120");
@@ -124,44 +123,26 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) {
   button_texture = IMG_LoadTexture(renderer, "../assets/button_blue.png");
   button_pressed = IMG_LoadTexture(renderer, "../assets/button_blue_flat.png");
 
-  background_texture = IMG_LoadTexture(renderer, "../assets/background.png");
-  cross_texture = IMG_LoadTexture(renderer, "../assets/square_cross.png");
+  slider_texture = IMG_LoadTexture(renderer, "../assets/slider.png");
+  arrow_texture = IMG_LoadTexture(renderer, "../assets/arrow_up.png");
 
-  half_default_button_width  = default_button_width  / 2;
-  half_default_button_height = default_button_height / 2;
-
-  // button_rect.x = HALF_WINDOW_WIDTH  - (button_texture->w / scale);
-  // button_rect.y = HALF_WINDOW_HEIGHT - (button_texture->h / scale);
-  button_rect.x = 15;
-  button_rect.y = 170;
+  button_rect.x = HALF_WINDOW_WIDTH  - (button_texture->w / scale);
+  button_rect.y = HALF_WINDOW_HEIGHT - (button_texture->h / scale);
   button_rect.w = (button_texture->w / 2);
   button_rect.h = (button_texture->h / 2);
 
-  button_rect2.x = 0;
-  button_rect2.y = 0;
-  button_rect2.w = (button_texture->w / 2);
-  button_rect2.h = (button_texture->h / 2);
+  slider_rect.w = (slider_texture->w * 2);
+  slider_rect.h = (slider_texture->h * 2);
+  slider_rect.x = HALF_WINDOW_WIDTH  - (slider_rect.w / scale);
+  slider_rect.y = HALF_WINDOW_HEIGHT - (slider_rect.h / scale);
 
-  window_rect.x = 0;
-  window_rect.y = 0;
-  window_rect.w = (button_texture->w * 1);
-  window_rect.h = (button_texture->h * 2);
-
-  window_handle_rect.x = 0;
-  window_handle_rect.y = 0;
-  window_handle_rect.w = (button_texture->w * 1);
-  window_handle_rect.h = 50;
-
-  cross_rect.x = window_rect.h - (cross_texture->h / 2);
-  cross_rect.x = window_rect.h - (cross_texture->h / 2);
-  cross_rect.y = 0;
-  cross_rect.w = (cross_texture->w / 2);
-  cross_rect.x = (cross_texture->h / 2);
+  arrow_rect.w = (arrow_texture->w * 0.7);
+  arrow_rect.h = (arrow_texture->h * 0.7);
+  arrow_rect.x = HALF_WINDOW_WIDTH  - (arrow_rect.w / scale) - 80;
+  arrow_rect.y = HALF_WINDOW_HEIGHT - (arrow_rect.h / scale) + 80;
 
   return SDL_APP_CONTINUE;
 }
-
-bool pressed = false;
 
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
@@ -175,9 +156,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
       return SDL_APP_SUCCESS;
     }
 
-    if(key_code == SDL_SCANCODE_W) {
-      pressed = true;
-    }
+    if(key_code == SDL_SCANCODE_W) {}
 
     if(key_code == SDL_SCANCODE_J && !(event->key.repeat)) {}
   }
@@ -185,9 +164,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
   if(event->type == SDL_EVENT_KEY_UP) {
     SDL_Scancode key_code = event->key.scancode;
 
-    if(key_code == SDL_SCANCODE_W) {
-      pressed = false;
-    }
+    if(key_code == SDL_SCANCODE_W) {}
   }
 
   if(event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -235,42 +212,7 @@ bool button(s32 id, SDL_FRect rect) {
   return false;
 }
 
-
-bool button_close(s32 id, SDL_FRect rect) {
-  Vector2 mouse = {ui_state.mouse_x, ui_state.mouse_y};
-
-  if(SDL_PointInRectFloat(&mouse, &rect)) {
-    ui_state.hot_item = id;
-    if(ui_state.active_item == false && ui_state.mouse_down) {
-      ui_state.active_item = id;
-    }
-  }
-
-  SDL_RenderTexture(renderer, cross_texture, NULL, &rect);
-
-  // if(ui_state.hot_item == id) {
-  //   if(ui_state.active_item == id) {
-  //     SDL_SetTextureColorMod(button_pressed, 18, 114, 154);
-  //     SDL_RenderTexture(renderer, button_pressed, NULL, &rect);
-  //   } else {
-  //     SDL_SetTextureColorMod(button_texture, 18, 114, 154);
-  //     SDL_RenderTexture(renderer, button_texture, NULL, &rect);
-  //   }
-  // } else {
-  //   SDL_SetTextureColorMod(button_texture, 255, 255, 255);
-  //   SDL_RenderTexture(renderer, button_texture, NULL, &rect);
-  // }
-
-  if(ui_state.mouse_down == false
-  && ui_state.hot_item == id
-  && ui_state.active_item == id) {
-    return true;
-  }
-
-  return false;
-}
-
-bool window_active = true;
+#define mapRange(a1,a2,b1,b2,s) (b1 + (s-a1)*(b2-b1)/(a2-a1))
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   u64 now = SDL_GetTicks();
@@ -281,48 +223,33 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
   ui_state.hot_item = 0;
 
   Vector2 mouse = {ui_state.mouse_x, ui_state.mouse_y};
-  if(SDL_PointInRectFloat(&mouse, &window_handle_rect) && ui_state.mouse_down) {
-    window_rect.x = ui_state.mouse_x - 70;
-    window_rect.y = ui_state.mouse_y - (window_handle_rect.h / 2);
-    window_handle_rect.x = ui_state.mouse_x - 70;
-    window_handle_rect.y = ui_state.mouse_y - (window_handle_rect.h / 2);
-    cross_rect.x = window_rect.x - cross_rect.w;
-    cross_rect.y = window_rect.y;
+
+  if(SDL_PointInRectFloat(&mouse, &arrow_rect) && ui_state.mouse_down) {
+    f32 new_x = mouse.x - (arrow_rect.w / 2);
+    f32 a_start = slider_rect.x;
+    f32 a_end = slider_rect.x + slider_rect.w - (arrow_rect.w / 2);
+
+    if(new_x >= a_start && new_x <= a_end) {
+      arrow_rect.x = new_x;
+      f32 value = mapRange(a_start, a_end, 0, 1, new_x);
+      SDL_Log("Slider value: %0.2f\n", value);
+    }
   }
 
   /********************* RENDERER *********************/
   SDL_SetRenderDrawColor(renderer, 15, 15, 15, SDL_ALPHA_OPAQUE);
   SDL_RenderClear(renderer);
 
-  if(window_active) {
-    SDL_RenderTexture(renderer, background_texture, NULL, &window_rect);
-    SDL_SetRenderDrawColor(renderer, 44, 44, 44, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &window_handle_rect);
-    // SDL_RenderTexture(renderer, cross_texture, NULL, &cross_rect);
-    if(button_close(3, cross_rect)) {
-      window_active = false;
-    }
-  }
-
-  SDL_RenderTexture(renderer, cross_texture, NULL, &cross_rect);
-
-
-  SDL_FRect child_rect = {0};
-  child_rect.x = button_rect.x + window_rect.x;
-  child_rect.y = button_rect.y + window_rect.y;
-  child_rect.w = button_rect.w;
-  child_rect.h = button_rect.h;
-  if(button(1, child_rect)) {
-    SDL_Log("Clicked\n");
-  }
-
-  // if(button(2, button_rect2)) {
-  //   SDL_Log("Clicked 2\n");
+  // if(button(1, button_rect)) {
+  //   SDL_Log("Clicked\n");
   // }
+
+  SDL_RenderTexture(renderer, slider_texture, NULL, &slider_rect);
+  SDL_RenderTexture(renderer, arrow_texture, NULL, &arrow_rect);
 
   SDL_SetRenderScale(renderer, scale, scale);
   SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-  SDL_RenderDebugText(renderer, (button_rect.x/scale) + 5, (button_rect.y/scale) + (pressed ? 5 : 4), "Click");
+  // SDL_RenderDebugText(renderer, (button_rect.x/scale) + 5, (button_rect.y/scale) + (pressed ? 5 : 4), "Click");
   SDL_SetRenderScale(renderer, 1, 1);
 
   SDL_RenderPresent(renderer);

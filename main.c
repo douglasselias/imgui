@@ -49,23 +49,6 @@ s32 GetRandomValue(s32 min, s32 max) {
   return value;
 }
 
-bool is_out_of_bounds(Vector2 position) {
-  float despawn_offset = 500;
-  float top_despawn_zone    = -despawn_offset;
-  float left_despawn_zone   = -despawn_offset;
-  float right_despawn_zone  =  despawn_offset + WINDOW_WIDTH;
-  float bottom_despawn_zone =  despawn_offset + WINDOW_HEIGHT;
-
-  if(position.y < top_despawn_zone
-  || position.x > right_despawn_zone
-  || position.y > bottom_despawn_zone
-  || position.x < left_despawn_zone) {
-    return true;
-  }
-
-  return false;
-}
-
 bool circles_are_colliding(Vector2 center1, f32 radius1, Vector2 center2, f32 radius2) {
   f32 dx = center2.x - center1.x;
   f32 dy = center2.y - center1.y;
@@ -77,11 +60,11 @@ bool circles_are_colliding(Vector2 center1, f32 radius1, Vector2 center2, f32 ra
   return collision;
 }
 
-void draw_circle(Vector2 center, float radius, SDL_Color c) {
+void draw_circle(Vector2 center, f32 radius, SDL_Color c) {
   SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, SDL_ALPHA_OPAQUE);
 
-  for(int x = -radius; x <= radius; x++) {
-    for(int y = -radius; y <= radius; y++) {
+  for(s32 x = -radius; x <= radius; x++) {
+    for(s32 y = -radius; y <= radius; y++) {
       if(x*x + y*y < radius*radius) {
         SDL_RenderPoint(renderer, center.x + x, center.y + y);
       }
